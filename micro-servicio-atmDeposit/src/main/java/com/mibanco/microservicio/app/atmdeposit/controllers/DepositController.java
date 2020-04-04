@@ -2,6 +2,7 @@ package com.mibanco.microservicio.app.atmdeposit.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -23,7 +24,7 @@ public class DepositController {
 	@Autowired
 	ResponseError responseError;
 	
-	@GetMapping("/")
+	@PostMapping("/")
 	public Single<ResponseEntity<Object>> deposit(@RequestBody Deposit deposit){
 		return depositService.guardaDeposito(deposit)
 			.map(d -> ResponseEntity.status(HttpStatus.CREATED).body(d))
