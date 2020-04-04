@@ -1,6 +1,5 @@
 package com.mibanco.microservicio.app.person.models.service;
 
-import java.util.Optional;
 
 import javax.persistence.EntityNotFoundException;
 
@@ -20,7 +19,7 @@ public class PersonService implements IPersonService {
 	public Single<Object> findPersonByDocument(String nroDocument) {
 		// TODO Auto-generated method stub
 		return Single.create(s  -> {
-			Optional<Person> person=	personRepository.findByDocument(nroDocument);
+			Person person=	personRepository.findByDocument(nroDocument).orElse(null);
 			if(person == null) {
 				s.tryOnError(new EntityNotFoundException("Recurso no encontrado"));
 			}else {

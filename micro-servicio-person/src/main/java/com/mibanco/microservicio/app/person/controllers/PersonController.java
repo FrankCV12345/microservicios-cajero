@@ -17,11 +17,12 @@ import io.reactivex.Single;
 public class PersonController {
 	@Autowired
 	PersonService personService;
-	
+	@Autowired
+	ResponseError responseError;
 	@GetMapping
 	public Single<ResponseEntity<Object>> buscaPersonPorNroDocurmeto(@RequestParam String documentNumber){
 		return personService.findPersonByDocument(documentNumber)
 				.map(person -> ResponseEntity.status(HttpStatus.OK).body(person))
-				.onErrorReturn(error -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(""));
+				.onErrorReturn(error -> responseError.responseEntityOnError(error));
 	}
 }
