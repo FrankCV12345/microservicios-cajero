@@ -16,10 +16,10 @@ public class AccountService implements IAccountService {
 	public Single<Object> getCuenta(String numberAccout) {
 		return Single.create(a  -> {
 				Thread.sleep(5000);
-				findAccount(a,numberAccout);
+				findAccountAndEmmiter(a,numberAccout);
 		});
 	}
-	private void findAccount(SingleEmitter<Object> s,String numberAccout) {
+	private void findAccountAndEmmiter(SingleEmitter<Object> s,String numberAccout) {
 		emmiter(s,findAccountByNumber(numberAccout));
 	}
 	private void emmiter(SingleEmitter<Object> s, Optional<Account> account) {
