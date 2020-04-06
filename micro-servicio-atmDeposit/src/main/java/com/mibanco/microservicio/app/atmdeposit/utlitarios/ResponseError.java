@@ -12,8 +12,9 @@ import org.springframework.stereotype.Component;
 public class ResponseError {
 	public ResponseEntity<Object> responseEntityOnError(Throwable  ex){
 		int statusCode = statusCode(ex.getClass());
+		String message = (ex.getMessage().isEmpty()) ? "Error interno":ex.getMessage();
 		Map<String, Object> rpta = new HashMap<>();
-		rpta.put("message", ex.getMessage());
+		rpta.put("message", message);
 		rpta.put("statusCode", statusCode);
 		return ResponseEntity.status(statusCode).body(rpta);
 	}
