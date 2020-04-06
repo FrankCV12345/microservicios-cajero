@@ -16,8 +16,8 @@ import io.reactivex.Single;
 @RestController
 @RequestMapping("/cards")
 public class CarController {
-	@GetMapping("/accounts")
-	public Single<ResponseEntity<Object>> getCards(@RequestParam String cardNumber){
+	@GetMapping
+	public Single<ResponseEntity<Object>> getCards(@RequestParam String documentNumber){
 		return Single
 				.just(ResponseEntity
 						.status(HttpStatus.OK)
