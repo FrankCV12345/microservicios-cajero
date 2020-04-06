@@ -20,6 +20,8 @@ public class ResponseError {
 	private int statusCode(Object clase) {
 		if(clase == ExceptionInInitializerError.class) {
 			return  HttpStatus.NOT_FOUND.value();
+		}else if (clase  == UserInBlackListException.class) {
+			return HttpStatus.BAD_REQUEST.value();
 		}
 		else{
 			return HttpStatus.INTERNAL_SERVER_ERROR.value();

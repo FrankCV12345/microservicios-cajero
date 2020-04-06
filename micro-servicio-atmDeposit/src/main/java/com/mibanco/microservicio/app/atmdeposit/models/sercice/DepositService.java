@@ -1,13 +1,12 @@
 package com.mibanco.microservicio.app.atmdeposit.models.sercice;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.mibanco.microservicio.app.atmdeposit.models.*;
+import com.mibanco.microservicio.app.atmdeposit.utlitarios.UserInBlackListException;
 
 import io.reactivex.Single;
 import retrofit2.Retrofit;
@@ -23,60 +22,44 @@ public class DepositService implements IDepositSercice {
 	
 	
 	private final IPersonService personService=(IPersonService) getService(urlServicePerson,IPersonService.class);
-	private final IReniecService reniecService = (IReniecService) getService(urlServiceReniec,IReniecService.class);
-	private final IFingerPrintsService fingerPrintService = (IFingerPrintsService) getService(urlServiceFingerPrint,IFingerPrintsService.class);
+	private final IValidUserService reniecService = (IValidUserService) getService(urlServiceReniec,IValidUserService.class);
+	private final IValidUserService fingerPrintService = (IValidUserService) getService(urlServiceFingerPrint,IValidUserService.class);
 	private final ICardsService cardsService = (ICardsService) getService(urlServiceCards,ICardsService.class);
 	private final IAccountService accountService = (IAccountService) getService(urlServiceAccounts,IAccountService.class);
 	
 	@Override
 	public Single<Object> guardaDeposito(Deposit deposit) {
-		
-		return  find(deposit);
-		
+		return  getAccountsAndDesposit(deposit);
 		}
-
-	 	private Single<Object> find(Deposit deposit){
-	 		return Single.create(s ->{
-				personService.buscaPersonaPorNroDoc(deposit.getDocumentNumbre())
-				.subscribe(a -> {
-					Person p =  (Person) a;
-					if(p.getBlackist() == true) {
-						s.tryOnError(new Exception("Este usuario esta en lista negra"));
-					}else {	
-						if(p.getFingerprint().equals(true)) {
-							reniecService.validaUser(new RequestUser(deposit.getDocumentNumbre()))
-							.subscribe(r->{
+	 	private Single<Object> getAccountsAndDesposit(Deposit deposit){
+	 		return Single.create(emmiter ->{
+					personService.buscaPersonaPorNroDoc(deposit.getDocumentNumbre())
+					.subscribe(person -> {
+						if(person.getBlackist() == true) {
+							emmiter.tryOnError(new UserInBlackListException("Este usuario esta en lista negra"));
+						}else {	
+							validUserReniecOrFingerPrint(person).subscribe( responseValidator ->{
 								cardsService.listaTargetasPorUsuario(deposit.getDocumentNumbre())
-								.subscribe(y -> {
-												List<Account> c =	y.parallelStream()
+									.subscribe(cards -> {
+											List<Account> accounts = cards.parallelStream()
 															.filter(card -> card.getActive() == true)	
-															.map(card -> accountService.getCuentas(card.getCardNumber()).map(j -> j).blockingGet())
+															.map(card -> accountService.getCuentas(card.getCardNumber()).map(account -> account).blockingGet())
 															.collect(Collectors.toList());
-										
-										s.onSuccess(c);	
+											AtmDepositResponse despitResponse  =  new AtmDepositResponse(responseValidator.getEntityName(),deposit.getAmount(),accounts);
+											emmiter.onSuccess(despitResponse);	
 									});
-									
-							});
-						}else{
-							fingerPrintService.validaUser(new RequestUser(deposit.getDocumentNumbre()))
-							.subscribe(r->{
-								cardsService.listaTargetasPorUsuario(deposit.getDocumentNumbre())
-								.subscribe(y -> {
-
-									List<Account> c =	y.parallelStream()
-											.filter(card -> card.getActive() == true)	
-											.map(card -> accountService.getCuentas(card.getCardNumber()).map(j -> j).blockingGet())
-											.collect(Collectors.toList());
-						
-									s.onSuccess(c);	
-					
-								});
 							});
 						}
-					}
-				});
-				
-		});
+					});
+			});
+	 	}
+	 	
+	 	private Single<ResponseValidUser> validUserReniecOrFingerPrint(Person person){
+	 		if(person.getFingerprint().equals(true)) {
+	 			return reniecService.validaUser(new RequestUser(person.getDocument()));
+	 		}else {
+	 			return fingerPrintService.validaUser(new RequestUser(person.getDocument()));
+	 		}
 	 	}
 		private Object getService(String urlBase, Class<?> service) {
 			Retrofit retrofit = new Retrofit

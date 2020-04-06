@@ -28,7 +28,7 @@ public class DepositController {
 	public Single<ResponseEntity<Object>> deposit(@RequestBody Deposit deposit){
 		return depositService.guardaDeposito(deposit)
 			.map(d -> ResponseEntity.status(HttpStatus.CREATED).body(d))
-			.onErrorReturn(error -> ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error.getMessage()));
+			.onErrorReturn(error ->responseError.responseEntityOnError(error));
 	}
 	
 }
