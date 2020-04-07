@@ -1,7 +1,8 @@
 package com.mibanco.microservicio.app.atmdeposit;
 
 
-class MicroServicioAtmDepositApplicationTests {
-
-
+public class MicroServicioAtmDepositApplicationTests {
+		
+	
+	
 }
