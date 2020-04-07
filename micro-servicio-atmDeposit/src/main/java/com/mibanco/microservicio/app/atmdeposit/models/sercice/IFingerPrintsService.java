@@ -7,7 +7,7 @@ import io.reactivex.Single;
 import retrofit2.http.Body;
 import retrofit2.http.POST;
 
-public interface IValidUserService {
+public interface IFingerPrintsService {
 	@POST("valid")
-	Single<ResponseValidUser> validaUser(@Body RequestUser user);
+	public Single<ResponseValidUser> validaUser(@Body RequestUser user);
 }

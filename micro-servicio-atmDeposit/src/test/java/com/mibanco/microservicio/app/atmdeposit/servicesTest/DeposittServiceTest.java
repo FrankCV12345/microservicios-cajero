@@ -12,6 +12,8 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 
 import com.mibanco.microservicio.app.atmdeposit.models.Account;
 import com.mibanco.microservicio.app.atmdeposit.models.Card;
@@ -22,16 +24,17 @@ import com.mibanco.microservicio.app.atmdeposit.models.ResponseValidUser;
 import com.mibanco.microservicio.app.atmdeposit.models.sercice.DepositService;
 import com.mibanco.microservicio.app.atmdeposit.models.sercice.IAccountService;
 import com.mibanco.microservicio.app.atmdeposit.models.sercice.ICardsService;
+import com.mibanco.microservicio.app.atmdeposit.models.sercice.IFingerPrintsService;
 import com.mibanco.microservicio.app.atmdeposit.models.sercice.IPersonService;
-import com.mibanco.microservicio.app.atmdeposit.models.sercice.IValidUserService;
+import com.mibanco.microservicio.app.atmdeposit.models.sercice.IReniecService;
 import com.mibanco.microservicio.app.atmdeposit.utlitarios.UserInBlackListException;
+
 
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DeposittServiceTest {
-
 	@InjectMocks	
 	DepositService depositService;
 
@@ -40,7 +43,7 @@ public class DeposittServiceTest {
 	Deposit depositUser2 = new Deposit("10000002",100.0);
 	Person person_0 = new Person(1L,"10000000",true,false);
 	Person person_1 = new Person(2L,"10000001",false,false);
-	Person person_2 = new Person(1L,"10000000",true,false);
+	Person person_2 = new Person(1L,"10000002",true,true);
 	
 	List<Card> cards = Arrays.asList(
 						new Card("1111222233334441",true),
@@ -57,15 +60,15 @@ public class DeposittServiceTest {
 	@Mock
 	IPersonService personService; 
 	@Mock
-	IValidUserService reniecService;
+	IFingerPrintsService fingerPrintService;
 	@Mock
-	IValidUserService fingerPrintService;
+	IReniecService reniecService;
 	@Mock
 	ICardsService cardsService;
 	@Mock
 	IAccountService accountService;
 	
-	@BeforeAll
+	@Before
 	public void setUp() {
 		//person service
 		when(personService.buscaPersonaPorNroDoc(depositUser0.getDocumentNumbre()))
@@ -77,21 +80,24 @@ public class DeposittServiceTest {
 		when(personService.buscaPersonaPorNroDoc(depositUser2.getDocumentNumbre()))
 		.thenReturn(Single.create(s -> s.onSuccess(person_2)));
 		
+		//fingert prints service
+		when(fingerPrintService.validaUser(new RequestUser(person_0.getDocument())))
+			.thenReturn(Single.just(new ResponseValidUser("Core",true)) );
+				
+				
 		//reniec service
-		when(reniecService.validaUser(new RequestUser(depositUser0.getDocumentNumbre())))
-		.thenReturn(Single.create( s -> s.onSuccess(new ResponseValidUser("Reniec",true))));
+		when(reniecService.validaUser(new RequestUser(person_1.getDocument())))
+			.thenReturn(Single.just(new ResponseValidUser("Reniec",true)) );
+	
 		
-		//fingerPrints service
-		when(fingerPrintService.validaUser(new RequestUser(depositUser1.getDocumentNumbre())))
-		.thenReturn(Single.create(s -> s.onSuccess(new ResponseValidUser("Core",true))));
 		
 		//cards serviec
 		when(cardsService.listaTargetasPorUsuario(depositUser0.getDocumentNumbre()))
 		.thenReturn(Single.create( s -> s.onSuccess(cards)));
-
+		
 		when(cardsService.listaTargetasPorUsuario(depositUser1.getDocumentNumbre()))
 		.thenReturn(Single.create( s -> s.onSuccess(cards)));
-		
+
 		//accounts service
 		when(accountService.getCuentas(cards.get(0).getCardNumber()))
 		.thenReturn(Single.create(s -> s.onSuccess( accounts.get(0) )));
@@ -103,9 +109,9 @@ public class DeposittServiceTest {
 		.thenReturn(Single.create(s -> s.onSuccess( accounts.get(2) )));
 		
 	}
-	/*
+
 	@Test
-	public void guardaDepositoValidPersonReniecTest() {
+	public void guardaDepositoValidPersonFingerPrintsTest() {
 		TestObserver<Object> testObserver  = new TestObserver<>();
 		depositService.guardaDeposito(depositUser0).subscribe(testObserver);
 		testObserver.awaitTerminalEvent();
@@ -115,9 +121,8 @@ public class DeposittServiceTest {
 			.assertValueCount(1)
 			.assertNoErrors();
 	}
-	
 	@Test
-	public void guardaDepositoValidPersonCoreTest() {
+	public void guardaDepositoValidPersonReniecTest() {
 		TestObserver<Object> testObserver  = new TestObserver<>();
 		depositService.guardaDeposito(depositUser1).subscribe(testObserver);
 		testObserver.awaitTerminalEvent();
@@ -129,7 +134,7 @@ public class DeposittServiceTest {
 	}
 	
 	@Test
-	public void ValidPersonInBlackListTest() {
+	public void guardaDepositoValidExcepcionBalckListTest() {
 		TestObserver<Object> testObserver  = new TestObserver<>();
 		depositService.guardaDeposito(depositUser2).subscribe(testObserver);
 		testObserver.awaitTerminalEvent();
@@ -137,6 +142,6 @@ public class DeposittServiceTest {
 			.assertSubscribed()
 			.assertError(UserInBlackListException.class);
 	}
+
 	
-	*/
 }

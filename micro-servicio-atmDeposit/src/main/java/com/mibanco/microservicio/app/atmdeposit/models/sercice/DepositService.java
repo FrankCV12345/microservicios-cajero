@@ -7,17 +7,18 @@ import org.springframework.stereotype.Service;
 
 import com.mibanco.microservicio.app.atmdeposit.models.*;
 import com.mibanco.microservicio.app.atmdeposit.utlitarios.UserInBlackListException;
-import static com.mibanco.microservicio.app.atmdeposit.utlitarios.LinksServices.*;
+
 import static com.mibanco.microservicio.app.atmdeposit.utlitarios.UtilitarioRetroFit.*;
+import static com.mibanco.microservicio.app.atmdeposit.utlitarios.LinksServices.*;
 import io.reactivex.Single;
 @Service
 public class DepositService implements IDepositSercice {
 	
-	private final IPersonService personService=(IPersonService) buildService(urlServicePerson,IPersonService.class);
-	private final IValidUserService reniecService = (IValidUserService) buildService(urlServiceReniec,IValidUserService.class);
-	private final IValidUserService fingerPrintService = (IValidUserService) buildService(urlServiceFingerPrint,IValidUserService.class);
-	private final ICardsService cardsService = (ICardsService) buildService(urlServiceCards,ICardsService.class);
-	private final IAccountService accountService = (IAccountService) buildService(urlServiceAccounts,IAccountService.class);
+	 IPersonService personService = (IPersonService) buildService(urlServicePerson,IPersonService.class);
+	 IReniecService reniecService = (IReniecService) buildService(urlServiceReniec,IReniecService.class);
+	 IFingerPrintsService fingerPrintService = (IFingerPrintsService) buildService(urlServiceFingerPrint,IFingerPrintsService.class);
+	 ICardsService cardsService = (ICardsService) buildService(urlServiceCards,ICardsService.class);
+	 IAccountService accountService = (IAccountService) buildService(urlServiceAccounts,IAccountService.class);
 	
 	@Override
 	public Single<Object> guardaDeposito(Deposit deposit) {
@@ -27,7 +28,8 @@ public class DepositService implements IDepositSercice {
 						if(person.getBlackist() == true) {
 							emmiter.tryOnError(new UserInBlackListException("Este usuario esta en lista negra"));
 						}else {	
-							validUserReniecOrFingerPrint(person).subscribe( responseValidator ->{
+							validUserReniecOrFingerPrint(person)
+							.subscribe( responseValidator ->{
 								cardsService.listaTargetasPorUsuario(deposit.getDocumentNumbre())
 									.subscribe(cards -> {
 											List<Account> accounts = cards
@@ -43,12 +45,15 @@ public class DepositService implements IDepositSercice {
 					});
 			});
 		}
+	
+	
+	
 
 	private Single<ResponseValidUser> validUserReniecOrFingerPrint(Person person){
 	 		if(person.getFingerprint().equals(true)) {
-	 			return reniecService.validaUser(new RequestUser(person.getDocument()));
-	 		}else {
 	 			return fingerPrintService.validaUser(new RequestUser(person.getDocument()));
+	 		}else {
+	 			return reniecService.validaUser(new RequestUser(person.getDocument()));
 	 		}
 	}
 }

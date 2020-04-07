@@ -1,6 +1,8 @@
 package com.mibanco.microservicio.app.atmdeposit.utlitarios;
 
-public class UserInBlackListException extends Exception {
+import java.io.Serializable;
+
+public class UserInBlackListException extends Exception implements Serializable {
 	public UserInBlackListException(String message) {
 		super(message);
 	}

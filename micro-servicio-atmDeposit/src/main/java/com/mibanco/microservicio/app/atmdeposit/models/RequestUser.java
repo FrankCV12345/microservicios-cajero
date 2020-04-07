@@ -1,23 +1,15 @@
 package com.mibanco.microservicio.app.atmdeposit.models;
 
-public class RequestUser {
+import java.io.Serializable;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class RequestUser implements Serializable {
 	private String document;
-
-	public RequestUser(String document) {
-		this.document = document;
-	}
-
-
-	public RequestUser() {
-	}
-
-	public void setDocument(String document) {
-		this.document = document;
-	}
-
-
-	public String getDocument() {
-		return document;
-	}
 	
 }
