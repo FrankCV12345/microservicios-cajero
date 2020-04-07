@@ -16,7 +16,7 @@ import com.mibanco.microservicio.app.atmdeposit.utlitarios.ResponseError;
 import io.reactivex.Single;
 
 @RestController
-@RequestMapping("/deposits")
+@RequestMapping("/atm/deposits")
 public class DepositController {
 	
 	@Autowired

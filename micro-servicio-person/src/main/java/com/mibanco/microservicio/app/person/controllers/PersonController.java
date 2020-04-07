@@ -13,7 +13,7 @@ import com.mibanco.microservicio.app.person.models.service.PersonService;
 import io.reactivex.Single;
 
 @RestController
-@RequestMapping("/persons")
+@RequestMapping("/core/persons")
 public class PersonController {
 	@Autowired
 	PersonService personService;

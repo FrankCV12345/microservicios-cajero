@@ -13,7 +13,7 @@ import com.mibanco.microservicio.app.accounts.models.service.AccountService;
 import io.reactivex.Single;
 
 @RestController
-@RequestMapping("/accounts")
+@RequestMapping("/core/accounts")
 public class AccountController {
 	
 	@Autowired

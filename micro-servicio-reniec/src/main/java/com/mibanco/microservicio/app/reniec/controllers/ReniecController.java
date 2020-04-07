@@ -13,7 +13,7 @@ import com.mibanco.microservicio.app.reniec.models.ResponseValidUser;
 
 import io.reactivex.Single;
 @RestController
-@RequestMapping("/reniec")
+@RequestMapping("/external/reniec")
 public class ReniecController {
 	
 	@PostMapping("/valid")

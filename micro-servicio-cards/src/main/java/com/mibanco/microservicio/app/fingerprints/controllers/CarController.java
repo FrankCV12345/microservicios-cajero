@@ -14,7 +14,7 @@ import com.mibanco.microservicio.app.fingerprints.models.Card;
 import io.reactivex.Single;
 
 @RestController
-@RequestMapping("/cards")
+@RequestMapping("/core/cards")
 public class CarController {
 	@GetMapping
 	public Single<ResponseEntity<Object>> getCards(@RequestParam String documentNumber){

@@ -13,7 +13,7 @@ import com.mibanco.microservicio.app.fingerprints.models.ResponseValidUser;
 
 import io.reactivex.Single;
 @RestController
-@RequestMapping("/fingerprints")
+@RequestMapping("/core/fingerprints")
 public class FingerprintsController {
 	
 	@PostMapping("/valid")
