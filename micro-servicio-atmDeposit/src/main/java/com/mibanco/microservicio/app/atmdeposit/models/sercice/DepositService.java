@@ -22,28 +22,24 @@ public class DepositService implements IDepositSercice {
 	
 	@Override
 	public Single<Object> guardaDeposito(Deposit deposit) {
-		return  Single.create(emmiter ->{
-				personService.buscaPersonaPorNroDoc(deposit.getDocumentNumbre())
-					.subscribe(person -> {
-						if(person.getBlackist() == true) {
-							emmiter.tryOnError(new UserInBlackListException("Este usuario esta en lista negra"));
-						}else {	
-							validUserReniecOrFingerPrint(person)
-							.subscribe( responseValidator ->{
-								cardsService.listaTargetasPorUsuario(deposit.getDocumentNumbre())
-									.subscribe(cards -> {
-											List<Account> accounts = cards
-															.parallelStream()
-															.filter(card -> card.getActive() == true)	
-															.map(card -> accountService.getCuentas(card.getCardNumber()).map(account -> account).blockingGet())
-															.collect(Collectors.toList());
-											AtmDepositResponse depositResponse  =  new AtmDepositResponse(responseValidator.getEntityName(),deposit.getAmount(),accounts);
-											emmiter.onSuccess(depositResponse);	
-										});
-									});
-							}
-					});
-			});
+		return Single.create( emitter -> personService.buscaPersonaPorNroDoc(deposit.getDocumentNumbre())
+				.filter(person -> person.getBlackist() == false)
+				.doOnComplete(() -> emitter.tryOnError( new UserInBlackListException("Este usuario esta en lista negra") ))
+				.subscribe(
+						person -> validUserReniecOrFingerPrint(person)
+								.map( responseValidUser -> {
+									List<Account> accounts =cardsService.listaTargetasPorUsuario(deposit.getDocumentNumbre())
+											.blockingGet()
+											.parallelStream()
+											.filter( card -> card.getActive())
+											.map( card -> accountService.getCuentas(card.getCardNumber()).blockingGet())
+											.collect(Collectors.toList());
+									return  new AtmDepositResponse(responseValidUser.getEntityName(),deposit.getAmount(),accounts);
+								})
+								.subscribe( atmDepositResponse -> emitter.onSuccess(atmDepositResponse)),
+						error -> emitter.tryOnError(error)
+				)
+		);
 		}
 	
 	
