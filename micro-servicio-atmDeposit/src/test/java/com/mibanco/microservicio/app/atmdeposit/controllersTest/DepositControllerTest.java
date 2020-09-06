@@ -48,8 +48,8 @@ public class DepositControllerTest {
 	 AtmDepositResponse atmResponse1 = new AtmDepositResponse("Reniec",depositUser1.getAmount(),accounts);
 	 AtmDepositResponse atmResponse2 = new AtmDepositResponse();
 	 UserInBlackListException userInBlackListException = new UserInBlackListException("Este usuario esta en lista negra");
-	 @Before
-	public  void up() {
+	 /*@Before
+	 public  void up() {
 		when(serviceDeposit.guardaDeposito(depositUser0))
 		.thenReturn(Single.create(s -> s.onSuccess(atmResponse0)));
 	
@@ -62,6 +62,7 @@ public class DepositControllerTest {
 
 	}
 
+	  */
 	@Test
 	public void depositUserReniecTest() {
 		TestObserver<ResponseEntity<Object>> testobserver = new TestObserver<>();

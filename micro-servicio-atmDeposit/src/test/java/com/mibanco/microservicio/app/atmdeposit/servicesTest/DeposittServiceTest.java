@@ -67,7 +67,7 @@ public class DeposittServiceTest {
 	ICardsService cardsService;
 	@Mock
 	IAccountService accountService;
-	
+	/*
 	@Before
 	public void setUp() {
 		//person service
@@ -110,6 +110,7 @@ public class DeposittServiceTest {
 		
 	}
 
+	 */
 	@Test
 	public void guardaDepositoValidPersonFingerPrintsTest() {
 		TestObserver<Object> testObserver  = new TestObserver<>();

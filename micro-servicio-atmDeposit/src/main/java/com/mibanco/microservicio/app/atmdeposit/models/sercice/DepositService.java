@@ -1,8 +1,12 @@
 package com.mibanco.microservicio.app.atmdeposit.models.sercice;
 
 import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
+import io.reactivex.Maybe;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import com.mibanco.microservicio.app.atmdeposit.models.*;
@@ -11,6 +15,8 @@ import com.mibanco.microservicio.app.atmdeposit.utlitarios.UserInBlackListExcept
 import static com.mibanco.microservicio.app.atmdeposit.utlitarios.UtilitarioRetroFit.*;
 import static com.mibanco.microservicio.app.atmdeposit.utlitarios.LinksServices.*;
 import io.reactivex.Single;
+import retrofit2.Response;
+
 @Service
 public class DepositService implements IDepositSercice {
 	
@@ -19,31 +25,37 @@ public class DepositService implements IDepositSercice {
 	 IFingerPrintsService fingerPrintService = (IFingerPrintsService) buildService(urlServiceFingerPrint,IFingerPrintsService.class);
 	 ICardsService cardsService = (ICardsService) buildService(urlServiceCards,ICardsService.class);
 	 IAccountService accountService = (IAccountService) buildService(urlServiceAccounts,IAccountService.class);
-	
-	@Override
-	public Single<Object> guardaDeposito(Deposit deposit) {
-		return Single.create( emitter -> personService.buscaPersonaPorNroDoc(deposit.getDocumentNumbre())
-				.filter(person -> person.getBlackist() == false)
-				.doOnComplete(() -> emitter.tryOnError( new UserInBlackListException("Este usuario esta en lista negra") ))
-				.subscribe(
-						person -> validUserReniecOrFingerPrint(person)
-								.map( responseValidUser -> {
-									List<Account> accounts =cardsService.listaTargetasPorUsuario(deposit.getDocumentNumbre())
-											.blockingGet()
-											.parallelStream()
-											.filter( card -> card.getActive())
-											.map( card -> accountService.getCuentas(card.getCardNumber()).blockingGet())
-											.collect(Collectors.toList());
-									return  new AtmDepositResponse(responseValidUser.getEntityName(),deposit.getAmount(),accounts);
-								})
-								.subscribe( atmDepositResponse -> emitter.onSuccess(atmDepositResponse)),
-						error -> emitter.tryOnError(error)
-				)
-		);
+
+
+
+	 private Person getPerson(Response<Person> personResponse) throws Exception {
+	 	if(personResponse.code() == HttpStatus.NOT_FOUND.value()){
+			throw  new Exception(" Usuario no encontrado");
 		}
-	
-	
-	
+	 	return personResponse.body();
+	 }
+
+	Function<String , Maybe<List<Account>>> getAccounts = (documentNumber) -> cardsService.listaTargetasPorUsuario(documentNumber)
+			.map(cards ->cards.parallelStream()
+						.filter(card -> card.getActive())
+						.map(card -> accountService.getCuentas(card.getCardNumber()).blockingGet())
+						.collect(Collectors.toList())
+			).toMaybe();
+	@Override
+	public Single<?> guardaDeposito(Deposit deposit) {
+		return personService.buscaPersonaPorNroDoc(deposit.getDocumentNumbre())
+				.map( personResponse -> getPerson(personResponse))
+				.filter(person -> person.getBlackist() ==false)
+				.map( person -> validUserReniecOrFingerPrint(person).blockingGet())
+				.zipWith(
+						getAccounts.apply(deposit.getDocumentNumbre()),
+						(responseValidUser ,accounts) -> new AtmDepositResponse(responseValidUser.getEntityName(),deposit.getAmount(),accounts)
+				)
+				.doOnComplete(() -> {
+					throw new UserInBlackListException("Usuario en lista negra");
+				})
+				.toSingle();
+		}
 
 	private Single<ResponseValidUser> validUserReniecOrFingerPrint(Person person){
 	 		if(person.getFingerprint().equals(true)) {
