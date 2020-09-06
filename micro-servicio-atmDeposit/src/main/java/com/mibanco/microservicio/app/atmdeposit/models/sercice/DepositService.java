@@ -19,7 +19,7 @@ import retrofit2.Response;
 
 @Service
 public class DepositService implements IDepositSercice {
-	
+	 // Servicios para consumir
 	 IPersonService personService = (IPersonService) buildService(urlServicePerson,IPersonService.class);
 	 IReniecService reniecService = (IReniecService) buildService(urlServiceReniec,IReniecService.class);
 	 IFingerPrintsService fingerPrintService = (IFingerPrintsService) buildService(urlServiceFingerPrint,IFingerPrintsService.class);
@@ -27,23 +27,11 @@ public class DepositService implements IDepositSercice {
 	 IAccountService accountService = (IAccountService) buildService(urlServiceAccounts,IAccountService.class);
 
 
-
-	 private Person getPerson(Response<Person> personResponse) throws Exception {
-	 	if(personResponse.code() == HttpStatus.NOT_FOUND.value()){
-			throw  new Exception(" Usuario no encontrado");
-		}
-	 	return personResponse.body();
-	 }
-
-	Function<String , Maybe<List<Account>>> getAccounts = (documentNumber) -> cardsService.listaTargetasPorUsuario(documentNumber)
-			.map(cards ->cards.parallelStream()
-						.filter(card -> card.getActive())
-						.map(card -> accountService.getCuentas(card.getCardNumber()).blockingGet())
-						.collect(Collectors.toList())
-			).toMaybe();
+	
 	@Override
-	public Single<?> guardaDeposito(Deposit deposit) {
-		return personService.buscaPersonaPorNroDoc(deposit.getDocumentNumbre())
+	public Single<Object> guardaDeposito(Deposit deposit) {
+		
+		return   personService.buscaPersonaPorNroDoc(deposit.getDocumentNumbre())
 				.map( personResponse -> getPerson(personResponse))
 				.filter(person -> person.getBlackist() ==false)
 				.map( person -> validUserReniecOrFingerPrint(person).blockingGet())
@@ -51,12 +39,15 @@ public class DepositService implements IDepositSercice {
 						getAccounts.apply(deposit.getDocumentNumbre()),
 						(responseValidUser ,accounts) -> new AtmDepositResponse(responseValidUser.getEntityName(),deposit.getAmount(),accounts)
 				)
+				.map(atmDeposit -> (Object) atmDeposit)
 				.doOnComplete(() -> {
 					throw new UserInBlackListException("Usuario en lista negra");
 				})
 				.toSingle();
+	
 		}
-
+	
+	// Valida si el usuario se debe buscar en el API de Reniec  o Fingerprints
 	private Single<ResponseValidUser> validUserReniecOrFingerPrint(Person person){
 	 		if(person.getFingerprint().equals(true)) {
 	 			return fingerPrintService.validaUser(new RequestUser(person.getDocument()));
@@ -64,6 +55,24 @@ public class DepositService implements IDepositSercice {
 	 			return reniecService.validaUser(new RequestUser(person.getDocument()));
 	 		}
 	}
+	
+
+
+	// Valida si la respuesta del API de Persons es 404 
+	 private Person getPerson(Response<Person> personResponse) throws Exception {
+	 	if(personResponse.code() == HttpStatus.NOT_FOUND.value()){
+			throw  new Exception(" Usuario no encontrado");
+		}
+	 	return personResponse.body();
+	 }
+
+	// Lista de Cuentas por numero de tarjeta
+	Function<String , Maybe<List<Account>>> getAccounts = (documentNumber) -> cardsService.listaTargetasPorUsuario(documentNumber)
+			.map(cards ->cards.parallelStream()
+						.filter(card -> card.getActive())
+						.map(card -> accountService.getCuentas(card.getCardNumber()).blockingGet())
+						.collect(Collectors.toList())
+			).toMaybe();
 }
 
 	

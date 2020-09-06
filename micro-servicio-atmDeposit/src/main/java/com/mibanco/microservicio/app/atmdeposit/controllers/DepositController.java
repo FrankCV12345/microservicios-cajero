@@ -1,5 +1,8 @@
 package com.mibanco.microservicio.app.atmdeposit.controllers;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,12 +26,15 @@ public class DepositController {
 	DepositService depositService;
 	@Autowired
 	ResponseError responseError;
-	
 	@PostMapping("/")
-	public Single<ResponseEntity<Object>> deposit(@RequestBody Deposit deposit){
-		return depositService.guardaDeposito(deposit)
-			.map(d -> ResponseEntity.status(HttpStatus.CREATED).body(d))
-			.onErrorReturn(error ->responseError.responseEntityOnError(error));
+	public Single<ResponseEntity<Object>> deposit(@RequestBody Deposit deposit){			
+		return  depositService.guardaDeposito(deposit)
+				.map(estatusOfAccount -> ResponseEntity.status(HttpStatus.CREATED).body(estatusOfAccount))
+				.onErrorReturn(error ->  responseError.responseEntityOnError(error));
+		
+		
+			
+			
 	}
 	
 }

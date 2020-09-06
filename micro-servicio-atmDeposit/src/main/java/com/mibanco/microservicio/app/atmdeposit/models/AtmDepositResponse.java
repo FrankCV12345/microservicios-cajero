@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class AtmDepositResponse {
+public class AtmDepositResponse extends Object {
 	private String fingerprintEntityName;
 	private List<Account> validAccounts;
 	private Double customerAmount;
